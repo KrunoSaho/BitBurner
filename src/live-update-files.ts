@@ -1,21 +1,21 @@
-// A modified script by jaguilar.
+// Original script by jaguilar. I have modified this to iron out the bugs.
 
 import { NS } from "./index";
 
 export async function main(ns: NS) {
     while (true) {
         await sync(ns);
-        await ns.sleep(4000);
+        await ns.sleep(5000);
     }
 }
 
-export async function sync(ns: NS) {
+async function sync(ns: NS) {
     for (const f of ns.ls("home", "js")) {
         await sync1(ns, f);
     }
 }
 
-export async function sync1(ns: NS, filename: string) {
+async function sync1(ns: NS, filename: string) {
     const url = `http://localhost:5500/out/${filename}`;
 
     const content = new TextDecoder("utf-8").decode(
@@ -32,6 +32,6 @@ export async function sync1(ns: NS, filename: string) {
         ns.print(`${filename} updated!`);
         // Clear the script so that the module also gets cleared.
         ns.rm(filename);
-        ns.write(filename, <any>content, "w");
+        await ns.write(filename, <any>content, "w");
     }
 }

@@ -1,13 +1,18 @@
 import { NS } from "./index";
-import { collectServerNames } from "./all-server-hack";
+import { collectServerNames } from "./all-server-hack.js";
 
 export async function main(ns: NS) {
     const host = "home";
     const [allServers, serverPaths] = collectServerNames(ns);
 
-    let profitableServers = allServers.filter((s) => {
-        ns.getServerGrowth(s) > 40;
-    });
+    let profitableServers = allServers
+        // map + filter
+        .map((s) => [s, ns.hackAnalyzeChance(s), ns.getServerGrowth(s)])
+        .filter(([_, h, g]) => h > 0.26 && g > 40)
+        .sort((a, b) => <number>a[1] - <number>b[1])
+        .map(([s, _, __]) => <string>s);
+
+    ns.print(`${profitableServers.length} servers to milk!`);
 
     const [usedRam, maxRam] = [ns.getServerUsedRam(host), ns.getServerMaxRam(host)];
     const availableRam = maxRam - usedRam;
@@ -24,11 +29,10 @@ export async function main(ns: NS) {
 
     while (true) {
         for (let target of profitableServers) {
-            for (let job in jobsToRun) {
+            for (let job of jobsToRun) {
                 if (ns.isRunning(job, host, target, threads.toString())) {
                     continue;
                 }
-
                 ns.run(job, threads, target, threads.toString());
             }
         }
