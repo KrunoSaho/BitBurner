@@ -7,8 +7,8 @@ export async function main(ns: NS) {
 
     let profitableServers = allServers
         // map + filter
-        .map((s) => [s, ns.hackAnalyzeChance(s), ns.getServerGrowth(s)])
-        .filter(([_, h, g]) => h > 0.26 && g > 40)
+        .map((s) => [s, ns.getServerRequiredHackingLevel(s), ns.getServerGrowth(s)])
+        .filter(([s, hl, g]) => ns.getPlayer().hacking >= hl && g > 40 && ns.hasRootAccess(<string>s))
         .sort((a, b) => <number>a[1] - <number>b[1])
         .map(([s, _, __]) => <string>s);
 
