@@ -28,13 +28,9 @@ function upgradeNode(ns: NS, node: NodeStats, idx: number) {
         return ns.hacknet.upgradeLevel(idx, 50);
     }
 
-    if (!ns.hacknet.upgradeRam(idx, 2)) {
-        if (!ns.hacknet.upgradeCore(idx, 2)) {
-            if (!ns.hacknet.upgradeLevel(idx, 30)) {
-                return false;
-            }
-        }
-    }
+    ns.hacknet.upgradeRam(idx, 2);
+    ns.hacknet.upgradeCore(idx, 2);
+    ns.hacknet.upgradeLevel(idx, 30);
 
     return true;
 }
@@ -70,7 +66,7 @@ export async function main(ns: NS) {
     while (true) {
         let nodes = getHackNodes(ns);
 
-        nodes // upgrade
+        nodes // take scores, order largest to smallest, get the first few, upgrade them!
             .map((n, idx) => <[NodeStats, number, number]>[n, idx, upgradeScore(ns, n, idx)])
             .sort((a, b) => b[2] - a[2])
             .slice(0, 3)
