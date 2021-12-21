@@ -8,9 +8,11 @@ function getHackNodes(ns: NS) {
 
     for (let i = 0; i < hn.numNodes(); i++) {
         if (
-            !Number.isFinite(hn.getRamUpgradeCost(i, 1)) &&
-            !Number.isFinite(hn.getCoreUpgradeCost(i, 1)) && // all infinite = not required
-            !Number.isFinite(hn.getLevelUpgradeCost(i, 1))
+            !(
+                Number.isFinite(hn.getRamUpgradeCost(i, 1)) ||
+                Number.isFinite(hn.getCoreUpgradeCost(i, 1)) ||
+                Number.isFinite(hn.getLevelUpgradeCost(i, 1))
+            )
         ) {
             continue;
         }
