@@ -31,32 +31,15 @@ export async function main(ns: NS) {
 
     ns.print(`${profitableServers.length} servers to milk!`);
 
-    const threads = computeThreadCount(ns, host, profitableServers);
     const jobsToRun = ["grow-server.js", "weaken-server.js", "hack-server.js"];
+    const threads = computeThreadCount(ns, host, profitableServers);
 
     while (true) {
         profitableServers.forEach((target) => {
-            let job = jobsToRun[0];
-            if (!ns.isRunning(job, host, target, threads.toString())) {
-                ns.run(job, threads, target, threads.toString());
-            }
-        });
-
-        // await ns.sleep(1000 * 10);
-
-        profitableServers.forEach((target) => {
-            let job = jobsToRun[1];
-            if (!ns.isRunning(job, host, target, threads.toString())) {
-                ns.run(job, threads, target, threads.toString());
-            }
-        });
-
-        // await ns.sleep(1000 * 10);
-
-        profitableServers.forEach((target) => {
-            let job = jobsToRun[2];
-            if (!ns.isRunning(job, host, target, threads.toString())) {
-                ns.run(job, threads, target, threads.toString());
+            for (let job of jobsToRun) {
+                if (!ns.isRunning(job, host, target, threads.toString())) {
+                    ns.run(job, threads, target, threads.toString());
+                }
             }
         });
 
