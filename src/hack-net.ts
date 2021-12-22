@@ -1,3 +1,13 @@
+/**
+ * A single, fully upgraded (from the point in the game I am in), costs:
+ * Level: $16.210m
+ * Ram: $3.227m
+ * Core: $222.536m
+ * Total: $241.973m
+ * @ 38,461k/s = (241.973e6/38.461e3)/3600 = 1.7476 hours to break even
+ * The "$38,461" figure comes from in game, and increases with the governor augment and a few others.
+ */
+
 import { Hacknet, NodeStats, NS } from "./index";
 
 /********************************* Util ********************************/
