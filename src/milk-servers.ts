@@ -4,44 +4,66 @@ import { collectServerNames } from "./all-server-hack.js";
 function computeThreadCount(ns: NS, host: string, profitableServers: string[]) {
     const serverCount = profitableServers.length;
 
+    const jobCount = 1;
+
     const [usedRam, maxRam] = [ns.getServerUsedRam(host), ns.getServerMaxRam(host)];
     const availableRam = maxRam - usedRam;
-    const maxScriptUsage = Math.max(
-        ns.getScriptRam("grow-server.js", host),
-        ns.getScriptRam("weaken-server.js", host),
-        ns.getScriptRam("hack-server.js", host)
-    );
-    const jobCount = 3;
+    const maxScriptUsage = ns.getScriptRam("single-server-hack.js", host);
 
-    const threads = Math.floor(availableRam / maxScriptUsage / jobCount / serverCount);
+    const a = availableRam / maxScriptUsage;
+    const b = a / jobCount;
+    const threads = Math.floor(b / serverCount);
 
     return threads;
 }
 
-export async function main(ns: NS) {
-    const host = "home";
+function getProfitableServers(ns: NS) {
     const [allServers, serverPaths] = collectServerNames(ns);
 
     let profitableServers = allServers
         // map + filter
         .map((s) => [s, ns.getServerRequiredHackingLevel(s), ns.getServerGrowth(s)])
         .filter(([s, hl, g]) => ns.getPlayer().hacking >= hl && g > 40 && ns.hasRootAccess(<string>s))
-        .sort((a, b) => <number>a[1] - <number>b[1])
+        .sort((a, b) => <number>b[2] - <number>a[2])
+        // .slice(0, 10)
         .map(([s, _, __]) => <string>s);
 
     ns.print(`${profitableServers.length} servers to milk!`);
 
-    const jobsToRun = ["grow-server.js", "weaken-server.js", "hack-server.js"];
-    const threads = computeThreadCount(ns, host, profitableServers);
+    return profitableServers;
+}
+
+export async function main(ns: NS) {
+    const servers = getProfitableServers(ns);
+    const hosts = ns.getPurchasedServers();
+
+    const jobsToRun = ["single-server-hack.js"];
+
+    for (let host of hosts) {
+        for (let job of jobsToRun) {
+            await ns.scp(job, "home", host);
+        }
+    }
+
+    hosts.unshift("home");
+    const threads = {};
+
+    threads["home"] = computeThreadCount(ns, "home", servers);
 
     while (true) {
-        profitableServers.forEach((target) => {
-            for (let job of jobsToRun) {
-                if (!ns.isRunning(job, host, target, threads.toString())) {
-                    ns.run(job, threads, target, threads.toString());
+        for (let host of hosts) {
+            let threadCount = threads[host];
+
+            if (threadCount == 0) continue;
+
+            servers.forEach((target) => {
+                for (let job of jobsToRun) {
+                    if (!ns.isRunning(job, host, target, threadCount.toString())) {
+                        ns.run(job, threadCount, target, threadCount.toString());
+                    }
                 }
-            }
-        });
+            });
+        }
 
         await ns.sleep(1000);
     }

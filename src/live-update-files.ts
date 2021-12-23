@@ -5,7 +5,7 @@ import { NS } from "./index";
 export async function main(ns: NS) {
     while (true) {
         await sync(ns);
-        await ns.sleep(5000);
+        await ns.sleep(3000);
     }
 }
 

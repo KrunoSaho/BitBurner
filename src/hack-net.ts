@@ -11,37 +11,24 @@
 import { Hacknet, NodeStats, NS } from "./index";
 
 /********************************* Util ********************************/
-function getHackNodes(ns: NS) {
-    let hn: Hacknet = ns.hacknet;
-
-    let data: Array<NodeStats> = [];
+function* getHackNodes(ns: NS) {
+    const hn: Hacknet = ns.hacknet;
 
     for (let i = 0; i < hn.numNodes(); i++) {
-        if (
-            !(
-                Number.isFinite(hn.getRamUpgradeCost(i, 1)) ||
-                Number.isFinite(hn.getCoreUpgradeCost(i, 1)) ||
-                Number.isFinite(hn.getLevelUpgradeCost(i, 1))
-            )
-        ) {
-            continue;
-        }
-
-        data.push(hn.getNodeStats(i));
+        yield hn.getNodeStats(i);
     }
-
-    return data;
 }
 
-function upgradeNode(ns: NS, node: NodeStats, idx: number) {
-    if (node.level < 100) {
-        return ns.hacknet.upgradeLevel(idx, 50);
-    }
+function getNodeId(node: NodeStats): number {
+    const data = node.name.split("-");
+    return <number>(<unknown>data[data.length - 1]);
+}
 
-    ns.hacknet.upgradeRam(idx, 2);
-    ns.hacknet.upgradeCore(idx, 2);
-    ns.hacknet.upgradeLevel(idx, 30);
-
+function upgradeNode(ns: NS, node: NodeStats) {
+    let idx = getNodeId(node);
+    ns.hacknet.upgradeRam(idx, 200);
+    ns.hacknet.upgradeCore(idx, 200);
+    ns.hacknet.upgradeLevel(idx, 200);
     return true;
 }
 
@@ -76,16 +63,12 @@ export async function main(ns: NS) {
     while (true) {
         let nodes = getHackNodes(ns);
 
-        nodes // take scores, order largest to smallest, get the first few, upgrade them!
-            .map((n, idx) => <[NodeStats, number, number]>[n, idx, upgradeScore(ns, n, idx)])
-            .sort((a, b) => b[2] - a[2])
-            .slice(0, 3)
-            .forEach(([n, i, _]) => {
-                if (upgradeNode(ns, n, i)) ns.print(`Hack Node ${i} upgraded!`);
-            });
+        for (let n of nodes) {
+            if (upgradeNode(ns, n)) ns.print(`Hack Node ${n.name} upgraded!`);
+        }
 
         hn.purchaseNode();
 
-        await ns.sleep(1000 * 60 * 1);
+        await ns.sleep(1000);
     }
 }

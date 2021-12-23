@@ -103,18 +103,24 @@ export async function main(ns: NS) {
     });
 
     // Backdoor
-    // servers.forEach((s) => {
-    //     if (ns.hasRootAccess(s)) {
-    //         // Connect to each server
-    //         let path = find_path_to_home(s, serverCons);
+    for (let s of servers) {
+        if (ns.hasRootAccess(s)) {
+            if (ns.getPlayer().hacking < ns.getServerRequiredHackingLevel(s)) {
+                continue;
+            }
 
-    //         for (let server of path) {
-    //             ns.connect(server);
-    //         }
+            // Connect to each server
+            let path = findPathToHome(s, serverCons);
 
-    //         await ns.installBackdoor();
+            for (let server of path) {
+                ns.connect(server);
+            }
 
-    //         ns.connect("home");
-    //     }
-    // });
+            await ns.installBackdoor();
+
+            ns.connect("home");
+        }
+    }
+
+    ns.connect("home");
 }
